@@ -30,7 +30,27 @@ function createDOM(VNode) {
         }
 
     }
+
+    // 给DOM设置属性值
+    setPropsForDOM(dom, props);
+
     return dom;
+}
+// 给DOM设置属性值
+function setPropsForDOM(dom, VNodeProps) {
+    if(!dom) return;
+    for(let key in VNodeProps) {
+        if(key === 'children') continue;
+        if(/^on[A-Z].*/.test(key)) {
+            // 处理事件
+        } else if(key === 'style') {
+            Object.keys(VNodeProps[key]).forEach(keyName => {
+                dom.style[keyName] = VNodeProps[key][keyName];
+            });
+        } else {
+            dom[key] = VNodeProps[key];
+        }
+    }
 }
 
 function mountArray(children, parent) {
