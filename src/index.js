@@ -2,7 +2,10 @@
 import React from './react';
 import ReactDOM from './react-dom';
 
-let element = <div style={{color: 'red'}}>hello simple react</div>;
-ReactDOM.render(element, document.getElementById('root'));
+function MyFunctionComponent(props) {
+    return <div style={{color: 'red'}}>hello simple react<span>child1</span><span>child2</span></div>;
+}
 
-console.log(element);
+ReactDOM.render(<MyFunctionComponent />, document.getElementById('root'));
+
+console.log(<MyFunctionComponent />);
