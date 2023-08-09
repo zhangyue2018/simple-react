@@ -39,6 +39,8 @@ function createDOM(VNode) {
 
     // 给DOM设置属性值
     setPropsForDOM(dom, props);
+    // 将真实DOM挂到虚拟DOM上面
+    VNode.dom = dom;
 
     return dom;
 }
@@ -47,6 +49,7 @@ function getDomByClassComponent(VNode) {
     let { type, props } = VNode;
     let instance = new type(props);
     let renderVNode = instance.render();
+    instance.oldVNode = renderVNode;
     if(!renderVNode) return null;
     return createDOM(renderVNode);
 }
@@ -83,6 +86,17 @@ function mountArray(children, parent) {
             mount(children[i], parent);
         }
     }
+}
+// 找到虚拟DOM对应的真实DOM
+export function findDomByVNode(VNode) {
+    if(!VNode) return;
+    if(VNode.dom) return VNode.dom;
+}
+
+export function updateDomTree(oldDOM, newVNode) {
+    let parentNode = oldDOM.parentNode;
+    parentNode.removeChild(oldDOM);
+    parentNode.appendChild(createDOM(newVNode));
 }
 
 const ReactDOM = {
