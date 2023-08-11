@@ -1,4 +1,5 @@
 import { REACT_ELEMENT } from "./utils";
+import { addEvent } from './event';
 
 // 初始化渲染，不仅仅是挂载的逻辑
 function render(VNode, containerDOM) {
@@ -66,7 +67,7 @@ function setPropsForDOM(dom, VNodeProps) {
     for(let key in VNodeProps) {
         if(key === 'children') continue;
         if(/^on[A-Z].*/.test(key)) {
-            // 处理事件
+            addEvent(dom, key.toLowerCase(), VNodeProps[key]);
         } else if(key === 'style') {
             Object.keys(VNodeProps[key]).forEach(keyName => {
                 dom.style[keyName] = VNodeProps[key][keyName];
