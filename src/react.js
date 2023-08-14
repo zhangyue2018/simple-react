@@ -22,9 +22,16 @@ function createElement(type, properties, children) {
     }
 }
 
+function createRef() {
+    return {
+        current: null
+    }
+}
+
 let React = {
     createElement,
-    Component
+    Component,
+    createRef
 }
 
 export default React;

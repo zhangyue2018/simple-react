@@ -27,10 +27,40 @@ class MyClassComponent extends React.Component {
             borderRadius: '6px',
             display: 'inline-block',
             padding: '6px 12px'
-        }} onClick={ () => this.updateShowText(++this.counter) }>hello simple react<span>{this.state.count}</span><span>{this.props.x2}</span></div>;
+        }} onClick={ () => this.updateShowText(++this.counter) }>hello simple react<span>{this.state.count}</span></div>;
     }
 }
 
-ReactDOM.render(<MyClassComponent x1={'child11'} x2={'child22'}/>, document.getElementById('root'));
+class CustomTextInput extends React.Component {
+    constructor(props) {
+        super(props);
+        // create a ref to store the textInput DOM element
+        this.textInput = React.createRef(); // { current: null }
+        // create a ref to store the React Component instance
+        this.counterComponentRef = React.createRef();
+        this.focusTextInput = this.focusTextInput.bind(this);
+    }
+
+    focusTextInput() {
+        this.textInput.current.focus();
+    }
+
+    show100() {
+        this.counterComponentRef.current.updateShowText(100);
+    }
+
+    render() {
+        return <div>
+            <div onClick={() => this.show100()}>show100</div>
+            <MyClassComponent ref={this.counterComponentRef} />
+        </div>
+        // return <div>
+        //     <input type="text" ref={this.textInput} />
+        //     <input type="button" value="Focus the text input" onClick={this.focusTextInput}/>
+        // </div>
+    }
+}
+
+ReactDOM.render(<CustomTextInput />, document.getElementById('root'));
 
 console.log(<MyClassComponent />);
