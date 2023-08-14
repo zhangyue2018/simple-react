@@ -1,4 +1,4 @@
-import { REACT_ELEMENT } from "./utils";
+import { REACT_ELEMENT, REACT_FORWARD_REF } from "./utils";
 import { addEvent } from './event';
 
 // 初始化渲染，不仅仅是挂载的逻辑
@@ -18,6 +18,11 @@ function createDOM(VNode) {
     //1.创建元素 2.处理子元素 3.处理属性值
     const {type, props, ref} = VNode;
     let dom;
+    // 判断是否是使用React.forwardRef生成的对象
+    if(type && type.$$typeof === REACT_FORWARD_REF) {
+        return getDomByForwardRefFunction(VNode);
+    }
+
     if(typeof type === 'function' && VNode.$$typeof === REACT_ELEMENT && type.IS_CLASS_COMPONENT) {
         return getDomByClassComponent(VNode);
     }
@@ -62,6 +67,14 @@ function getDomByFunctionComponent(VNode) {
     let renderVNode = type(props);
     if(!renderVNode) return null;
     return createDOM(renderVNode);
+}
+
+function getDomByForwardRefFunction(VNode) {
+    let { type, props, ref } = VNode;
+    let renderVNode = type.render(props, ref);
+    if(!renderVNode) return null;
+    return createDOM(renderVNode);
+
 }
 // 给DOM设置属性值
 function setPropsForDOM(dom, VNodeProps) {
