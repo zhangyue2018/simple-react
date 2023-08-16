@@ -105,10 +105,97 @@ export function findDomByVNode(VNode) {
     if(VNode.dom) return VNode.dom;
 }
 
-export function updateDomTree(oldDOM, newVNode) {
+export function updateDomTree(oldVNode, newVNode, oldDOM) {
     let parentNode = oldDOM.parentNode;
-    parentNode.removeChild(oldDOM);
-    parentNode.appendChild(createDOM(newVNode));
+    // 新节点，旧节点都不存在
+    // 新节点存在，旧节点不存在
+    // 新节点不存在，旧节点存在
+    // 新节点存在，旧节点也存在，但是类型不一样
+    // 新节点存在，旧节点也存在，且类型一样 ----> 值得我们进行深入的比较，探索复用相关节点的方案
+    const typeMap = {
+        NO_OPERATE: !oldVNode && !newVNode,
+        ADD: !oldVNode && newVNode,
+        DELETE: oldVNode && !newVNode,
+        REPLACE: oldVNode && newVNode && oldVNode.type !== newVNode.type
+    };
+
+    let UPDATE_TYPE = Object.keys(typeMap).filter(key => typeMap[key])[0];
+
+    switch(UPDATE_TYPE) {
+        case 'NO_OPERATE':
+            break;
+        case 'DELETE':
+            removeVNode(oldVNode);
+            break;
+        case 'ADD':
+            oldDOM.parentNode.appendChild(createDOM(newVNode));
+            break;
+        case 'REPLACE':
+            removeVNode(oldVNode);
+            oldDOM.parentNode.appendChild(createDOM(newVNode));
+            break;
+        default:
+            // 深度的dom diff，新老虚拟DOM都存在且类型相同
+            deepDOMDiff(oldVNode, newVNode);
+            break;
+    }
+
+}
+
+function removeVNode(oldVNode) {
+    const currentDOM = findDomByVNode(oldVNode);
+    if(currentDOM) currentDOM.remove();
+}
+
+function deepDOMDiff(oldVNode, newVNode) {
+    let diffTypeMap = {
+        ORIGIN_NODE: typeof oldVNode.type === 'string',
+        CLASS_COMPONENT: typeof oldVNode.type === 'function' && oldVNode.type.IS_CLASS_COMPONENT,
+        FUNCTION_COMPONENT: typeof oldVNode.type === 'function',
+        TEXT: oldVNode.type === REACT_TEXT
+    };
+
+    let DIFF_TYPE = Object.keys(diffTypeMap).filter(key => diffTypeMap[key])[0];
+    switch(DIFF_TYPE) {
+        case 'ORIGIN_NODE':
+            let currentDOM = newVNode.dom = findDomByVNode(oldVNode);
+            setPropsForDOM(currentDOM, newVNode.props);
+            updateChildren(currentDOM, oldVNode.props.children, newVNode.props.children);
+            break;
+        case 'CLASS_COMPONENT':
+            updateClassComponent(oldVNode, newVNode);
+            break;
+        case 'FUNCTION_COMPONENT':
+            updateFunctionComponent(oldVNode, newVNode);
+            break;
+        case 'TEXT':
+            newVNode.dom = findDomByVNode(oldVNode);
+            newVNode.dom.textContent = newVNode.props.text;
+            break;
+        default:
+            break;
+
+    }
+}
+
+function updateClassComponent(oldVNode, newVNode) {
+    const classInstance = newVNode.classInstance = oldVNode.classInstance;
+    classInstance.updater.launchUpdate();
+}
+
+function updateFunctionComponent(oldVNode, newVNode) {
+    let oldDOM = findDomByVNode(oldVNode);
+    if(!oldDOM) return;
+    const { type, props } = newVNode;
+    let newRenderVNode = type(props);
+    updateDomTree(oldVNode.oldRenderVNode, newRenderVNode, oldDOM);
+    newVNode.oldRenderVNode = newRenderVNode;
+}
+
+
+// DOM DIFF 算法的核心
+function updateChildren(currentDOM, oldVNodeChildren, newVNodeChildren) {
+
 }
 
 const ReactDOM = {
