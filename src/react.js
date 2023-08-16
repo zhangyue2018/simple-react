@@ -1,4 +1,4 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF } from './utils';
+import { REACT_ELEMENT, REACT_FORWARD_REF, toVNode } from './utils';
 import {Component} from './Component';
 function createElement(type, properties, children) {
     let ref = properties.ref || null;
@@ -9,9 +9,9 @@ function createElement(type, properties, children) {
     let props = {...properties};
     
     if(arguments.length > 3) {
-        props.children = Array.prototype.slice.call(arguments, 2);
+        props.children = Array.prototype.slice.call(arguments, 2).map(toVNode);
     } else {
-        props.children = children;
+        props.children = toVNode(children);
     }
     return {
         $$typeof: REACT_ELEMENT,

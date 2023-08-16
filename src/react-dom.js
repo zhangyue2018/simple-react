@@ -1,4 +1,4 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF } from "./utils";
+import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_TEXT } from "./utils";
 import { addEvent } from './event';
 
 // 初始化渲染，不仅仅是挂载的逻辑
@@ -29,7 +29,9 @@ function createDOM(VNode) {
     if(typeof type === 'function' && VNode.$$typeof === REACT_ELEMENT) {
         return getDomByFunctionComponent(VNode);
     }
-    if(type && VNode.$$typeof === REACT_ELEMENT) {
+    if(type === REACT_TEXT) {
+        dom = document.createTextNode(props.text);
+    } else if(type && VNode.$$typeof === REACT_ELEMENT) {
         dom = document.createElement(type);
     }
     if(props) {
@@ -37,10 +39,7 @@ function createDOM(VNode) {
             mount(props.children, dom);
         } else if(Array.isArray(props.children)) {
             mountArray(props.children, dom);
-        } else if(typeof props.children === 'string'){
-            dom.appendChild(document.createTextNode(props.children));
         }
-
     }
 
     // 给DOM设置属性值
@@ -96,11 +95,8 @@ function setPropsForDOM(dom, VNodeProps) {
 function mountArray(children, parent) {
     if(!Array.isArray(children)) return;
     for(let i=0; i<children.length; i++) {
-        if(typeof children[i] === 'string') {
-            parent.appendChild(document.createTextNode(children[i]));
-        } else {
-            mount(children[i], parent);
-        }
+        children[i].index = i;
+        mount(children[i], parent);
     }
 }
 // 找到虚拟DOM对应的真实DOM
