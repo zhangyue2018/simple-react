@@ -1,4 +1,4 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_TEXT } from "./utils";
+import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_TEXT, CREATE, MOVE } from "./utils";
 import { addEvent } from './event';
 
 // 初始化渲染，不仅仅是挂载的逻辑
@@ -54,6 +54,7 @@ function createDOM(VNode) {
 function getDomByClassComponent(VNode) {
     let { type, props, ref } = VNode;
     let instance = new type(props);
+    VNode.classInstance = instance;
     let renderVNode = instance.render();
     instance.oldVNode = renderVNode;
     ref && (ref.current = instance);
@@ -65,6 +66,7 @@ function getDomByFunctionComponent(VNode) {
     let { type, props } = VNode;
     let renderVNode = type(props);
     if(!renderVNode) return null;
+    VNode.oldRenderVNode = renderVNode;
     return createDOM(renderVNode);
 }
 
@@ -106,7 +108,6 @@ export function findDomByVNode(VNode) {
 }
 
 export function updateDomTree(oldVNode, newVNode, oldDOM) {
-    let parentNode = oldDOM.parentNode;
     // 新节点，旧节点都不存在
     // 新节点存在，旧节点不存在
     // 新节点不存在，旧节点存在
@@ -194,8 +195,71 @@ function updateFunctionComponent(oldVNode, newVNode) {
 
 
 // DOM DIFF 算法的核心
-function updateChildren(currentDOM, oldVNodeChildren, newVNodeChildren) {
+function updateChildren(parentDOM, oldVNodeChildren, newVNodeChildren) {
+    oldVNodeChildren = (Array.isArray(oldVNodeChildren) ? oldVNodeChildren : [oldVNodeChildren]).filter(Boolean);
+    newVNodeChildren = (Array.isArray(newVNodeChildren) ? newVNodeChildren : [newVNodeChildren]).filter(Boolean);
 
+    let lastNotChangedIndex = -1;
+    let oldKeyChildMap = {};
+
+    oldVNodeChildren.forEach((oldVNode, index) => {
+        let oldKey = oldVNode && oldVNode.key ? oldVNode.key : index;
+        oldKeyChildMap[oldKey] = oldVNode;
+    });
+    // 遍历新的子虚拟DOM树数组，找到可以复用但需要移动的节点，需要重新创建的节点，需要删除的节点，剩下的就是可以复用且不用移动的节点
+    let actions = [];
+    newVNodeChildren.forEach((newVNode, index) => {
+        newVNode.index = index;
+        let newKey = newVNode.key ? newVNode.key : index;
+        let oldVNode = oldKeyChildMap[newKey];
+        if(oldVNode) {
+            deepDOMDiff(oldVNode, newVNode);
+            if(oldVNode.index < lastNotChangedIndex) {
+                actions.push({
+                    type: MOVE,
+                    oldVNode,
+                    newVNode,
+                    index
+                });
+            }
+            delete oldKeyChildMap[newKey];
+            lastNotChangedIndex = Math.max(lastNotChangedIndex, oldVNode.index);
+        } else {
+            actions.push({
+                type: CREATE,
+                newVNode,
+                index
+            });
+        }
+    });
+
+    let VNodeToMove = actions.filter(action => action.type === MOVE).map(action => action.oldVNode);
+    let VNodeToDelete = Object.values(oldKeyChildMap);
+    VNodeToMove.concat(VNodeToDelete).forEach(oldVNode => {
+        let oldDOM = findDomByVNode(oldVNode);
+        oldDOM.remove();
+    });
+
+    actions.forEach(action => {
+        let { type, oldVNode, newVNode, index } = action;
+        // childNodes是父DOM中不用移动不用删除的子DOM
+        let childNodes = parentDOM.childNodes;
+        const getDomForInsert = () => {
+            if(type === CREATE) {
+                return createDOM(newVNode);
+            } else {
+                return findDomByVNode(oldVNode);
+            }
+        }
+        // 查看对应的为止是否已经存在DOM，如果已存在，则插入到已存在DOM的前方；如果不存在，则直接将此节点加入
+        let childNode = childNodes[index];
+        if(childNode) {
+            parentDOM.insertBefore(getDomForInsert(), childNode);
+        } else {
+            parentDOM.appendChild(getDomForInsert());
+        }
+
+    });
 }
 
 const ReactDOM = {
