@@ -26,6 +26,11 @@ class Clock extends React.Component {
         clearInterval(this.timerID);
     }
 
+    shouldComponentUpdate(nextProps, nextState) {
+        console.log('shouldComponentUpdate---');
+        return true;
+    }
+
     // 1.更新完成后调用，初始化渲染不会调用
     // 2.当组件完成更新，需要对DOM进行某种操作的时候，适合在这个函数中进行
     // 3.当当前的props和之前的props有所不同的时候，可以在这里进行有必要的网络请求
@@ -44,6 +49,7 @@ class Clock extends React.Component {
     }
 
     render() {
+        console.log('render');
         return <div>
             <h1>Hello World!</h1>
             <h2>It is {this.state.date.toLocaleTimeString()}</h2>

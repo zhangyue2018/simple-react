@@ -31,17 +31,25 @@ class Updater {
         }
     }
     // 执行更新
-    launchUpdate() {
+    launchUpdate(nextProps) {
+        let { ClassComponentInstance, pendingStates } = this;
         // 判断有无待更新的state,可以保证在调用flushUpdaterQueue时，不会重复执行
-        if(this.pendingStates.length === 0) return;
+        if(pendingStates.length === 0 && !nextProps) return;
+        let shouldUpdate = true;
         // 1.更新ClassComponent实例的state
-        this.ClassComponentInstance.state = this.pendingStates.reduce((preState, newState) => {
+        let nextState = pendingStates.reduce((preState, newState) => {
             return { ...preState, ...newState };
-        }, this.ClassComponentInstance.state);
+        }, ClassComponentInstance.state);
+        
+        if(ClassComponentInstance.shouldComponentUpdate && !ClassComponentInstance.shouldComponentUpdate(nextProps, nextState)) {
+            shouldUpdate = false;
+        }
+        ClassComponentInstance.state = nextState;
+        if(nextProps) ClassComponentInstance.props = nextProps;
         // 清空updater关联的数据
-        this.pendingStates.length = 0;
+        pendingStates.length = 0;
         // 2.调用ClassComponent实例本身的update函数，进行更新操作
-        this.ClassComponentInstance.update();
+        if(shouldUpdate) ClassComponentInstance.update();
     }
 }
 export class Component {
