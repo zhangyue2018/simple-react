@@ -65,6 +65,7 @@ export class Component {
         let oldDOM  = findDomByVNode(oldVNode);
         let newVNode = this.render();
         updateDomTree(oldVNode, newVNode, oldDOM);
-        this.oldVNode = newVNode; 
+        this.oldVNode = newVNode;
+        if(this.componentDidUpdate) this.componentDidUpdate(this.props, this.state);
     }
 }

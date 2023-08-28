@@ -59,7 +59,9 @@ function getDomByClassComponent(VNode) {
     instance.oldVNode = renderVNode;
     ref && (ref.current = instance);
     if(!renderVNode) return null;
-    return createDOM(renderVNode);
+    let dom = createDOM(renderVNode);
+    if(instance.componentDidMount) instance.componentDidMount();
+    return dom;
 }
 
 function getDomByFunctionComponent(VNode) {
@@ -146,6 +148,9 @@ export function updateDomTree(oldVNode, newVNode, oldDOM) {
 function removeVNode(oldVNode) {
     const currentDOM = findDomByVNode(oldVNode);
     if(currentDOM) currentDOM.remove();
+    if(oldVNode.classInstance && oldVNode.classInstance.componentWillUnmount) {
+        oldVNode.classInstance.componentWillUnmount();
+    }
 }
 
 function deepDOMDiff(oldVNode, newVNode) {
