@@ -1,4 +1,4 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_TEXT, CREATE, MOVE } from "./utils";
+import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_TEXT, CREATE, MOVE, REACT_MEMO, shallowCompare } from "./utils";
 import { addEvent } from './event';
 
 // 初始化渲染，不仅仅是挂载的逻辑
@@ -18,6 +18,11 @@ function createDOM(VNode) {
     //1.创建元素 2.处理子元素 3.处理属性值
     const {type, props, ref} = VNode;
     let dom;
+    
+    if(type && type.$$typeof === REACT_MEMO) {
+        return getDomByMemoFunctionComponent(VNode);
+    }
+
     // 判断是否是使用React.forwardRef生成的对象
     if(type && type.$$typeof === REACT_FORWARD_REF) {
         return getDomByForwardRefFunction(VNode);
@@ -69,7 +74,8 @@ function getDomByFunctionComponent(VNode) {
     let renderVNode = type(props);
     if(!renderVNode) return null;
     VNode.oldRenderVNode = renderVNode;
-    return createDOM(renderVNode);
+    let dom = VNode.dom = createDOM(renderVNode);
+    return dom;
 }
 
 function getDomByForwardRefFunction(VNode) {
@@ -79,6 +85,15 @@ function getDomByForwardRefFunction(VNode) {
     return createDOM(renderVNode);
 
 }
+
+function getDomByMemoFunctionComponent(VNode) {
+    let { type, props } = VNode;
+    let renderVNode = type.type(props);
+    if(!renderVNode) return null;
+    VNode.oldRenderVNode = renderVNode;
+    return createDOM(renderVNode);
+}
+
 // 给DOM设置属性值
 function setPropsForDOM(dom, VNodeProps) {
     if(!dom) return;
@@ -158,7 +173,8 @@ function deepDOMDiff(oldVNode, newVNode) {
         ORIGIN_NODE: typeof oldVNode.type === 'string',
         CLASS_COMPONENT: typeof oldVNode.type === 'function' && oldVNode.type.IS_CLASS_COMPONENT,
         FUNCTION_COMPONENT: typeof oldVNode.type === 'function',
-        TEXT: oldVNode.type === REACT_TEXT
+        TEXT: oldVNode.type === REACT_TEXT,
+        MEMO: oldVNode.type.$$typeof === REACT_MEMO
     };
 
     let DIFF_TYPE = Object.keys(diffTypeMap).filter(key => diffTypeMap[key])[0];
@@ -178,6 +194,9 @@ function deepDOMDiff(oldVNode, newVNode) {
             newVNode.dom = findDomByVNode(oldVNode);
             newVNode.dom.textContent = newVNode.props.text;
             break;
+        case 'MEMO':
+            updateMemoFunctionComponent(oldVNode, newVNode);
+            break;
         default:
             break;
 
@@ -190,12 +209,25 @@ function updateClassComponent(oldVNode, newVNode) {
 }
 
 function updateFunctionComponent(oldVNode, newVNode) {
-    let oldDOM = findDomByVNode(oldVNode);
+    let oldDOM = newVNode.dom = findDomByVNode(oldVNode);
     if(!oldDOM) return;
     const { type, props } = newVNode;
     let newRenderVNode = type(props);
     updateDomTree(oldVNode.oldRenderVNode, newRenderVNode, oldDOM);
     newVNode.oldRenderVNode = newRenderVNode;
+}
+
+function updateMemoFunctionComponent(oldVNode, newVNode) {
+    let { type } = oldVNode;
+    if(!type.compare && !shallowCompare(oldVNode.props, newVNode.props) || type.compare && !type.compare(oldVNode.props, newVNode.props)) {
+        const oldDOM = findDomByVNode(oldVNode);
+        const { type } = newVNode;
+        let renderVNode = type.type(newVNode.props);
+        updateDomTree(oldVNode.oldRenderVNode, renderVNode, oldDOM);
+        newVNode.oldRenderVNode = renderVNode;
+    } else {
+        newVNode.oldRenderVNode = oldVNode.oldRenderVNode;
+    }
 }
 
 
