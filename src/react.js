@@ -1,9 +1,9 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF, toVNode } from './utils';
+import { REACT_ELEMENT, REACT_FORWARD_REF, toVNode, shallowCompare } from './utils';
 import {Component} from './Component';
 function createElement(type, properties, children) {
     let ref = properties.ref || null;
     let key = properties.key || null;
-    ['ref', 'key', '__selft', '__source'].forEach(key => {
+    ['ref', 'key', '__self', '__source'].forEach(key => {
         delete properties[key];
     });
     let props = {...properties};
@@ -35,9 +35,16 @@ function forwardRef(render) {
     }
 }
 
+class PureComponent extends Component {
+    shouldComponentUpdate(nextProps, nextState) {
+        return !shallowCompare(this.props, nextProps) || !shallowCompare(this.state, nextState);
+    }
+}
+
 let React = {
     createElement,
     Component,
+    PureComponent,
     createRef,
     forwardRef
 }
