@@ -1,6 +1,6 @@
 // import React from 'react';
-import React, { useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useEffect, useState } from './react';
+import ReactDOM from './react-dom';
 
 export function createConnection(serverUrl, roomId) {
     return {
@@ -23,20 +23,20 @@ function ChatRoom({ roomId }) {
         };
     }, [roomId, serverUrl]);
 
-    return <>
+    return <div>
         <label>
             Server URL: {' '}
-            <input value={serverUrl} onChange={e => setServerUrl(e.target.value)} />
+            <input value={serverUrl} onInput={e => setServerUrl(e.target.value)} />
         </label>
         <h1>Welcome to the {roomId} room!</h1>
-    </>
+    </div>
 }
 
 export default function App() {
     const [ roomId, setRoomId ] = useState('general');
     const [ show, setShow ] = useState(false);
     return (
-        <>
+        <div>
             <label>
                 Choose the chat room: {' '}
                 <select value={roomId} onChange={e => setRoomId(e.target.value)}>
@@ -50,7 +50,7 @@ export default function App() {
             </button>
             {show && <hr/>}
             {show && <ChatRoom roomId={roomId} />}
-        </>
+        </div>
     );
 }
 
