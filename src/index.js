@@ -1,6 +1,6 @@
-import React from 'react';
-import { useState } from 'react';
-import ReactDOM from 'react-dom';
+// import React from 'react';
+import React, { useState } from './react';
+import ReactDOM from './react-dom';
 
 function Counter() {
     const [count, setCount] = useState(0);

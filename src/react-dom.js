@@ -1,11 +1,17 @@
 import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_TEXT, CREATE, MOVE, REACT_MEMO, shallowCompare } from "./utils";
 import { addEvent } from './event';
+import { resetHookIndex } from './hooks';
+export let emitUpdateForHooks;
 
 // 初始化渲染，不仅仅是挂载的逻辑
 function render(VNode, containerDOM) {
     // 将虚拟DOM转化成真实DOM
     // 将得到的真实DOM挂载到containerDOM中
     mount(VNode, containerDOM);
+    emitUpdateForHooks = () => {
+        resetHookIndex();
+        updateDomTree(VNode, VNode, findDomByVNode(VNode));
+    }
 }
 
 function mount(VNode, containerDOM) {
