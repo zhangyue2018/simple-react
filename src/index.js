@@ -1,6 +1,6 @@
 // import React from 'react';
-import React, { useReducer } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useReducer } from './react';
+import ReactDOM from './react-dom';
 
 function reducer(state, action) {
     if(action.type === 'increment_age') {
