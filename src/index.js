@@ -1,33 +1,25 @@
 // import React from 'react';
-import React, { useRef, useImperativeHandle } from './react';
-import ReactDOM from './react-dom';
+import React, { useState, useMemo, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 
-const MyInput = React.forwardRef(function(props, ref) {
-    const inputRef = useRef(null);
-    
-    useImperativeHandle(ref, () => {
-        return {
-            focus() {
-                inputRef.current.focus();
-            }
-        }
-    });
-
-    return <input {...props} ref={inputRef} />
+const MemoFunctionComponent = React.memo(function Child({ data, handleClick }) {
+    console.log('Child Component rendering');
+    return <button onClick={handleClick}>Age: {data.age}</button>
 });
 
-function Form() {
-    const inputRef = useRef(null);
-    function handleClick() {
-        inputRef.current.focus();
-        // inputRef.current.style.opcity = 0;
-    }
+function App() {
+    console.log('App Component rendering');
+    const [name, setName] = useState('zy');
+    const [age, setAge] = useState(30);
+    let data = useMemo(() => ({age}), [age]);
+    let handleClick = useCallback(() => setAge(age + 1), [age]);
+
     return <div>
-        <MyInput label="Enter your name:" ref={inputRef} />
-        <button onClick={handleClick}>Focus the input</button>
+        <input value={name} onInput={e => setName(e.target.value)} />
+        <MemoFunctionComponent data={data} handleClick={handleClick} />
     </div>
 }
 
 
-ReactDOM.render(<Form />, document.getElementById('root'));
+ReactDOM.render(<App />, document.getElementById('root'));
 
