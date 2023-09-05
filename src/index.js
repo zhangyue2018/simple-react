@@ -1,6 +1,6 @@
 // import React from 'react';
-import React, { useState, useMemo, useCallback } from 'react';
-import ReactDOM from 'react-dom';
+import React, { useState, useMemo, useCallback } from './react';
+import ReactDOM from './react-dom';
 
 const MemoFunctionComponent = React.memo(function Child({ data, handleClick }) {
     console.log('Child Component rendering');

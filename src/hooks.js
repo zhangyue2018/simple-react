@@ -60,3 +60,24 @@ export function useRef(initialValue) {
 export function useImperativeHandle(ref, dataFunction) {
     ref.current = dataFunction();
 }
+
+export function useMemo(dataFactory, deps = []) {
+    let [preData, preDeps] = states[hookIndex] || [null, null];
+    if(!states[hookIndex] || deps.some((item, index) => item !== preDeps[index])) {
+        let newdata = dataFactory();
+        states[hookIndex++] = [newdata, deps];
+        return newdata;
+    }
+    hookIndex++;
+    return preData;
+}
+
+export function useCallback(callback, deps = []) {
+    let [preCallback, preDeps] = states[hookIndex] || [null, null];
+    if(!states[hookIndex] || deps.some((item, index) => item !== preDeps[index])) {
+        states[hookIndex++] = [callback, deps];
+        return callback;
+    }
+    hookIndex++;
+    return preCallback;
+}
